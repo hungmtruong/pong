@@ -1,0 +1,158 @@
+<html>
+<canvas id= "gameCanvas" width="800" height="600"></canvas>
+
+<script>
+//info about dimension
+var canvas;
+//info about graphic
+var canvasContext;
+
+var ballSize = 20;
+var ballX = 50;
+var ballY = 50;
+var ballSpeedX = 10;
+var ballSpeedY = 4;
+var player = 250;
+var npc = 250;
+var winScreen = false;
+var playerScore = 0;
+var npcScore = 0;
+
+const PADDLE_WIDTH = 10;
+const PADDLE_HEIGHT = 100;
+const GAME_OVER = 3;
+
+function calculateMouse(evt){
+	var rect = canvas.getBoundingClientRect();
+	var root = document.documentElement;
+	var mouseX = evt.clientX - rect.left - root.scrollLeft;
+	var mouseY = evt.clientY - rect.top - root.scrollTop;
+	return {
+		x:mouseX,
+		y:mouseY
+	};
+}
+window.onload = function() {
+	canvas = document.getElementById('gameCanvas');
+	canvasContext = canvas.getContext('2d');
+	var fps = 30;
+	setInterval(function(){
+		draw();
+		move();
+	}, 1000/fps);
+	
+	canvas.addEventListener('mousedown', 
+		function(evt) {
+			if(winScreen){
+				playerScore = 0;
+				npcScore = 0;
+				winScreen = false;
+			}
+		});
+	
+	canvas.addEventListener('mousemove',
+		function(evt){
+			var mousePos = calculateMouse(evt);
+			player = mousePos.y-(PADDLE_HEIGHT/2);
+		});
+	
+}
+
+function draw(){
+	
+	//game screen
+	colorRect(0,0,canvas.width,canvas.height,'#3a393d');
+	canvasContext.fillStyle = "aqua";
+	if(winScreen) {
+		if(playerScore >= GAME_OVER){
+			canvasContext.fillText("You won!", 240,250);
+		} else if(npcScore >= GAME_OVER) {
+			canvasContext.fillText("You lost!", 240,250);
+		}
+		canvasContext.fillStyle = '#FF4C60';
+		canvasContext.fillText("Click to continue", 110,350);
+		return;
+	}
+	drawNet();
+	//player
+	colorRect(0,player,PADDLE_WIDTH,PADDLE_HEIGHT,'aqua');
+	
+	//npc
+	colorRect(canvas.width - PADDLE_WIDTH,npc,PADDLE_WIDTH,PADDLE_HEIGHT,'aqua');
+	
+	//ball
+	canvasContext.fillStyle = '#FF4C60';
+	
+	canvasContext.beginPath();
+	//canvasContext.arc(X, Y, radius,angles, radians, clockwise or counterclockwise);
+	canvasContext.arc(ballX, ballY, ballSize/2, 0, Math.PI*2, true);
+	canvasContext.fill();
+	canvasContext.font = "80px Arial";
+	canvasContext.fillText(playerScore, 300,100);
+	
+	canvasContext.fillText(npcScore, 500,100);
+	
+}
+function drawNet(){
+	for(var i = 0; i < canvas.height; i+=40) {
+		colorRect(canvas.width/2-1,i,2,20,'black');
+	}
+}
+function move(){
+	if(winScreen) return;
+	ballX += ballSpeedX;
+	ballY += ballSpeedY;
+	npcMove();
+	if(ballX < 0){
+		if(ballY > player && ballY < player+PADDLE_HEIGHT) {
+			ballSpeedX *= -1;
+			var deltaY = ballY - (player + PADDLE_HEIGHT/2);
+			ballSpeedY = deltaY * 0.25;
+		}else {
+			npcScore++;
+			reset();
+		}
+	}
+	if(ballX > canvas.width){
+		if(ballY > npc && ballY < npc+PADDLE_HEIGHT) {
+			ballSpeedX *= -1;
+			var deltaY = ballY - (npc + PADDLE_HEIGHT/2);
+			ballSpeedY = deltaY * 0.35;
+		}else {
+			playerScore++;
+			reset();
+		}
+	} 
+	if(ballY > canvas.height || ballY < 0) {
+		ballSpeedY *= -1;
+	}
+}
+function npcMove(){
+	var npcCenter = npc +(PADDLE_HEIGHT/2);
+	if(npcCenter < ballY -35) {
+		npc += 7;
+	}else if(npcCenter > ballY +35){
+		npc -= 7;
+	}
+}
+function reset(){
+	if(playerScore >= GAME_OVER || npcScore >= GAME_OVER) {
+		winScreen = true;
+	}
+	ballSpeedX *= -1;
+	//ballX = canvas.width/2;
+	//ballY = canvas.heigth/2;
+	ballX = 400;
+	ballY = 300;
+}
+function colorRect(leftX, topY, width, height, color){
+	canvasContext.fillStyle = color;
+	canvasContext.fillRect(leftX, topY, width, height);
+}
+</script>
+
+
+
+
+
+</html>
